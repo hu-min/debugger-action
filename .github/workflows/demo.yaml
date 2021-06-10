@@ -1,0 +1,35 @@
+name: Ubuntu Shell Actions
+on:
+  watch:
+    types: started
+jobs:
+  Ubuntu:
+    runs-on: ubuntu-latest
+    steps: 
+    - name: 配置环境
+      run:
+        sudo timedatectl set-timezone Asia/Shanghai
+        cd ~
+        sudo apt-get update
+        sudo apt-get -y install build-essential asciidoc binutils bzip2 gawk gettext git libncurses5-dev libz-dev patch python3 python2.7 unzip zlib1g-dev lib32gcc1 libc6-dev-i386 subversion flex uglifyjs gcc-multilib g++-multilib p7zip p7zip-full msmtp libssl-dev texinfo libglib2.0-dev xmlto qemu-utils upx libelf-dev autoconf automake libtool autopoint device-tree-compiler ccache xsltproc rename antlr3 gperf curl screen upx
+        git clone --depth 1 https://github.com/openwrt/openwrt.git -b v19.07.7 openwrt
+        cd openwrt
+        sed -i '$a src-git custom https://github.com/garypang13/openwrt-packages.git' feeds.conf.default
+        rm -Rf tools/upx && svn co https://github.com/coolsnowwolf/lede/trunk/tools/upx tools/upx
+        rm -Rf tools/ucl && svn co https://github.com/coolsnowwolf/lede/trunk/tools/ucl tools/ucl
+        sed -i 's?zstd$?zstd ucl upx\n$(curdir)/upx/compile := $(curdir)/ucl/compile?g' tools/Makefile
+        sed -i 's/O2/Os/g' include/target.mk
+        sed -i '/app_update/d' package/feeds/custom/luci-app-bypass/luasrc/controller/bypass.lua
+        sed -i 's/PKG_VERSION:=1/PKG_VERSION:=2/' package/feeds/custom/luci-app-bypass/Makefile
+        sed -i 's/ +unzip +lua-maxminddb//' package/feeds/custom/luci-app-bypass/Makefile
+        sed -i '/status_bottom/d' package/feeds/custom/luci-app-bypass/luasrc/model/cbi/bypass/base.lua
+        rm -Rf package/feeds/custom/luci-app-bypass/{root/www,root/usr/share/bypass/GeoLite2-Country.mmdb}
+
+    - name: 上传脚本
+      id: upload
+      run: |
+        curl -fsSL git.io/file-transfer | sh
+    - name: SSH connection to Actions
+      id: ssh
+      uses: garypang13/debugger-action@master
+      
