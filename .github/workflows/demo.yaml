@@ -7,7 +7,7 @@ jobs:
     runs-on: ubuntu-latest
     steps: 
     - name: 配置环境
-      run:
+      run: |
         sudo timedatectl set-timezone Asia/Shanghai
         cd ~
         sudo apt-get update
