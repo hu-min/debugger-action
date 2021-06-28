@@ -17,10 +17,12 @@ jobs:
         sed -i '$a src-git custom https://github.com/garypang13/openwrt-packages.git' feeds.conf.default
         ./scripts/feeds update -a
         ./scripts/feeds install -a
+        sed -i 's/Os/O2/g' include/target.mk
+        rm -Rf tools/upx && svn co https://github.com/coolsnowwolf/lede/trunk/tools/upx tools/upx
+        rm -Rf tools/ucl && svn co https://github.com/coolsnowwolf/lede/trunk/tools/ucl tools/ucl
+        sed -i 's?zstd$?zstd ucl upx\n$(curdir)/upx/compile := $(curdir)/ucl/compile?g' tools/Makefile
         sed -i -r 's/(GO_VERSION_MAJOR_MINOR):=.*/\1:=1.16/;s/(GO_VERSION_PATCH):=.*/\1:=/' feeds/packages/lang/golang/golang-version.mk
         sed -i -r 's/(PKG_HASH):=.*/\1:=7688063d55656105898f323d90a79a39c378d86fe89ae192eb3b7fc46347c95a/' feeds/packages/lang/golang/golang/Makefile
-        sed -i '/tools-$(BUILD_TOOLCHAIN)/a tools-y += ucl upx' tools/Makefile
-        sed -i '/# builddir dependencies/a $(curdir)/upx/compile := $(curdir)/ucl/compile' tools/Makefile
         sed -i 's/192.168.1.1/192.168.11.1/g' package/base-files/files/bin/config_generate
         sed -i 's/root::0:0:99999:7:::/root:$1$Day7sC.u$hEwhkZuqSiei2WZA4QwFN\/:18620:0:99999:7:::/g' package/base-files/files/etc/shadow
         sed -i 's/set wireless.radio${devidx}.disabled=1/set wireless.radio${devidx}.disabled=0/g' package/kernel/mac80211/files/lib/wifi/mac80211.sh
