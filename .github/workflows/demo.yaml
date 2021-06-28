@@ -15,15 +15,32 @@ jobs:
         git clone --depth 1 https://github.com/openwrt/openwrt.git -b v19.07.7 openwrt
         cd openwrt
         sed -i '$a src-git custom https://github.com/garypang13/openwrt-packages.git' feeds.conf.default
-        rm -Rf tools/upx && svn co https://github.com/coolsnowwolf/lede/trunk/tools/upx tools/upx
-        rm -Rf tools/ucl && svn co https://github.com/coolsnowwolf/lede/trunk/tools/ucl tools/ucl
-        sed -i 's?zstd$?zstd ucl upx\n$(curdir)/upx/compile := $(curdir)/ucl/compile?g' tools/Makefile
-        sed -i 's/O2/Os/g' include/target.mk
-        #sed -i '/app_update/d' package/feeds/custom/luci-app-bypass/luasrc/controller/bypass.lua
-        #sed -i 's/PKG_VERSION:=1/PKG_VERSION:=2/' package/feeds/custom/luci-app-bypass/Makefile
-        #sed -i 's/ +unzip +lua-maxminddb//' package/feeds/custom/luci-app-bypass/Makefile
-        #sed -i '/status_bottom/d' package/feeds/custom/luci-app-bypass/luasrc/model/cbi/bypass/base.lua
-        #rm -Rf package/feeds/custom/luci-app-bypass/{root/www,root/usr/share/bypass/GeoLite2-Country.mmdb}
+        ./scripts/feeds update -a
+        ./scripts/feeds install -a
+        sed -i -r 's/(GO_VERSION_MAJOR_MINOR):=.*/\1:=1.16/;s/(GO_VERSION_PATCH):=.*/\1:=/' feeds/packages/lang/golang/golang-version.mk
+        sed -i -r 's/(PKG_HASH):=.*/\1:=7688063d55656105898f323d90a79a39c378d86fe89ae192eb3b7fc46347c95a/' feeds/packages/lang/golang/golang/Makefile
+        sed -i '/tools-$(BUILD_TOOLCHAIN)/a tools-y += ucl upx' tools/Makefile
+        sed -i '/# builddir dependencies/a $(curdir)/upx/compile := $(curdir)/ucl/compile' tools/Makefile
+        sed -i 's/192.168.1.1/192.168.11.1/g' package/base-files/files/bin/config_generate
+        sed -i 's/root::0:0:99999:7:::/root:$1$Day7sC.u$hEwhkZuqSiei2WZA4QwFN\/:18620:0:99999:7:::/g' package/base-files/files/etc/shadow
+        sed -i 's/set wireless.radio${devidx}.disabled=1/set wireless.radio${devidx}.disabled=0/g' package/kernel/mac80211/files/lib/wifi/mac80211.sh
+        sed -i "s/16384/65536/" package/kernel/linux/files/sysctl-nf-conntrack.conf 
+        sed -i '/tl-wr703n-v1/{n;s/tplink-4mlzma/tplink-8mlzma/;}' target/linux/ar71xx/image/tiny-tp-link.mk
+        sed -i '/TL_WR703N_GPIO_LED_SYSTEM/{s/27/0/;}' target/linux/ar71xx/files/arch/mips/ath79/mach-tl-wr703n.c
+        sed -i '/TL_WR703N_GPIO_BTN_RESET/{s/11/12/;}' target/linux/ar71xx/files/arch/mips/ath79/mach-tl-wr703n.c
+        sed -i '/TL_WR703N_GPIO_LED_SYSTEM,/{n;s/1/0/;}' target/linux/ar71xx/files/arch/mips/ath79/mach-tl-wr703n.c
+        sed -i '/parts\[0\].mask_flags/d' target/linux/ar71xx/files/drivers/mtd/tplinkpart.c
+        sed -i '/parts\[3\].mask_flags/d' target/linux/ar71xx/files/drivers/mtd/tplinkpart.c
+        sed -i '/app_update/d' package/feeds/custom/luci-app-bypass/luasrc/controller/bypass.lua
+        sed -i 's/PKG_VERSION:=1/PKG_VERSION:=2/' package/feeds/custom/luci-app-bypass/Makefile
+        sed -i 's/ +unzip +lua-maxminddb//' package/feeds/custom/luci-app-bypass/Makefile
+        sed -i '/status_bottom/d' package/feeds/custom/luci-app-bypass/luasrc/model/cbi/bypass/base.lua
+        rm -Rf package/feeds/custom/luci-app-bypass/{root/www,root/usr/share/bypass/GeoLite2-Country.mmdb}
+        wget https://github.com/hu-min/debugger-action/raw/master/.config
+        make defconfig
+        make download -j1
+        make V=sc
+        echo "编译完成"
 
     - name: 上传脚本
       id: upload
